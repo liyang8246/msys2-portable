@@ -1,14 +1,9 @@
 name: msys2-portable-action-workflow
 on:
   workflow_dispatch:
-  push:
-    # Sequence of patterns matched against refs/tags
-    tags:
-      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
-      - 'c*'
-      
+
 permissions:
-    contents: write
+  contents: write
 
 jobs:
   build:
@@ -46,24 +41,18 @@ jobs:
           cd /d "D:\a\_temp\setup-msys2" &&^
           dir
           
-            
-      # - run: |
-      #     echo $(pwd) && \
-      #     ls && \
-      #     cd '${{ github.workspace }}' && \
-      #     ls && \
-      #     g++ --version
-          
       - name: Archive Release
         uses: thedoctor0/zip-release@master
         with:
           type: 'zip'
           directory: "${{ steps.msys2.outputs.msys2-location }}"
-          filename: "${{ github.event.repository.name }}-${{ github.ref_name }}-${{ matrix.sys }}-${{matrix.env}}.zip"
+          filename: "msys2-portable-main-${{ matrix.sys }}-${{matrix.env}}.zip"
           
       - name: Release prebuilt
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "${{ steps.msys2.outputs.msys2-location }}/${{ github.event.repository.name }}-${{ github.ref_name }}-${{ matrix.sys }}-${{matrix.env}}.zip"
+          tag: "main"
+          name: "MSYS2 Portable Main Release"
+          artifacts: "${{ steps.msys2.outputs.msys2-location }}/msys2-portable-main-${{ matrix.sys }}-${{matrix.env}}.zip"
           allowUpdates: true
           token: ${{ secrets.GITHUB_TOKEN }}
