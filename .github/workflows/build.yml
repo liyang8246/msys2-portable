@@ -7,10 +7,6 @@ permissions:
 
 jobs:
   build:
-    strategy:
-      matrix:
-        include:
-          - { sys: clang64, env: clang-x86_64 }
     runs-on: windows-latest
     defaults:
       run:
@@ -18,41 +14,51 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 安装最小 clang64 环境（仅需要的工具和包）
       - id: msys2
         uses: msys2/setup-msys2@v2
         with:
-          msystem: ${{matrix.sys}}
+          msystem: CLANG64
           update: true
           install: >-
+            mingw-w64-clang-x86_64-toolchain
             curl
-            git     
-            mingw-w64-${{matrix.env}}-openssl
-            mingw-w64-${{matrix.env}}-gcc
+            git
+            mingw-w64-clang-x86_64-openssl
 
-      - continue-on-error: true
+      # 用 Windows shell 清理冗余 (保留必要目录)
+      - name: Clean up MSYS2, keep only clang64
         shell: cmd
         run: |
-          cd /d "D:/a/msys2-portable/msys2-portable" &&^
-          dir
+          set "MSYS2DIR=%MSYS2_LOCATION%"
+          REM 删除不必要的架构
+          rmdir /s /q "%MSYS2DIR%\mingw32"
+          rmdir /s /q "%MSYS2DIR%\mingw64"
+          rmdir /s /q "%MSYS2DIR%\ucrt64"
+          rmdir /s /q "%MSYS2DIR%\clangarm64"
+          REM 删除缓存、文档、locale
+          rmdir /s /q "%MSYS2DIR%\var\cache\pacman\pkg"
+          rmdir /s /q "%MSYS2DIR%\usr\share\doc"
+          rmdir /s /q "%MSYS2DIR%\usr\share\man"
+          rmdir /s /q "%MSYS2DIR%\usr\share\locale"
+          REM 删除一些日志和示例
+          rmdir /s /q "%MSYS2DIR%\var\log"
+          rmdir /s /q "%MSYS2DIR%\usr\share\examples"
 
-      - continue-on-error: true
-        shell: cmd
-        run: |
-          cd /d "D:\a\_temp\setup-msys2" &&^
-          dir
-          
-      - name: Archive Release
+      # 打包为 zip
+      - name: Archive minimal MSYS2 portable
         uses: thedoctor0/zip-release@master
         with:
           type: 'zip'
           directory: "${{ steps.msys2.outputs.msys2-location }}"
-          filename: "msys2-portable-main-${{ matrix.sys }}-${{matrix.env}}.zip"
-          
-      - name: Release prebuilt
+          filename: "msys2-portable-clang64-minimal.zip"
+
+      # 发布 Release
+      - name: Release portable msys2
         uses: ncipollo/release-action@v1
         with:
           tag: "main"
-          name: "MSYS2 Portable Main Release"
-          artifacts: "${{ steps.msys2.outputs.msys2-location }}/msys2-portable-main-${{ matrix.sys }}-${{matrix.env}}.zip"
+          name: "MSYS2 Portable CLANG64 Minimal"
+          artifacts: "${{ steps.msys2.outputs.msys2-location }}/msys2-portable-clang64-minimal.zip"
           allowUpdates: true
           token: ${{ secrets.GITHUB_TOKEN }}
