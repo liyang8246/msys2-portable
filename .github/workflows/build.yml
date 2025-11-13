@@ -40,7 +40,7 @@ jobs:
       - name: Replace pacman.conf with your project config
         shell: pwsh
         run: |
-          $src = "${{ github.workspace }}\pacman.config"
+          $src = "${{ github.workspace }}\pacman.conf"
           $dst = "${{ steps.msys2.outputs.msys2-location }}\etc\pacman.conf"
           Copy-Item -Path $src -Destination $dst -Force
 
