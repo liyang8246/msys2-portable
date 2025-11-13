@@ -6,7 +6,7 @@ on:
       - main
   schedule:
     - cron: '0 0 * * 0'
-    
+
 permissions:
   contents: write
 
@@ -52,6 +52,13 @@ jobs:
             }
           }
           Set-Content -Path $conf -Value $output
+
+      - name: Remove unused root files and locale directory
+        shell: pwsh
+        run: |
+          $msys2 = "${{ steps.msys2.outputs.msys2-location }}"
+          $keep = @("clang64.exe", "clang64.ico", "clang64.ini")
+          Get-ChildItem -Path $msys2 -File | Where-Object { $keep -notcontains $_.Name } | Remove-Item -Force
 
       - name: Archive minimal MSYS2 portable
         uses: thedoctor0/zip-release@master
