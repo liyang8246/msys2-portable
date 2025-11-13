@@ -37,21 +37,24 @@ jobs:
           Remove-Item "$msys2\var\cache\pacman\pkg" -Force -Recurse -ErrorAction Ignore
           Remove-Item "$msys2\usr\share\locale" -Force -Recurse -ErrorAction Ignore
 
-      - name: Comment out unneeded repo sections in pacman.conf
+      - name: Overwrite pacman.conf with minimal config
         shell: pwsh
         run: |
           $conf = "${{ steps.msys2.outputs.msys2-location }}\etc\pacman.conf"
-          $content = Get-Content $conf
-          $output = $content | ForEach-Object {
-            if ($_ -match '^\[(clangarm64|mingw32|mingw64|ucrt64)\]') {
-              "#$_"
-            } elseif ($_ -match '^Include = /etc/pacman.d/mirrorlist.mingw') {
-              "#$_"
-            } else {
-              $_
-            }
-          }
-          Set-Content -Path $conf -Value $output
+          @'
+[options]
+HoldPkg = pacman
+Architecture = auto
+ParallelDownloads = 8
+SigLevel = Required
+LocalFileSigLevel = Optional
+
+[clang64]
+Include = /etc/pacman.d/mirrorlist.clang64
+
+[msys]
+Include = /etc/pacman.d/mirrorlist.msys
+'@ | Set-Content -Path $conf -Encoding UTF8
 
       - name: Remove unused root files and locale directory
         shell: pwsh
