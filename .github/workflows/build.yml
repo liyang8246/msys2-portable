@@ -1,6 +1,9 @@
 name: msys2-portable-action-workflow
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -21,32 +24,45 @@ jobs:
           update: true
 
       - name: Clean up MSYS2, keep only clang64
-        shell: cmd
+        shell: pwsh
         run: |
-          set "MSYS2DIR=${{ steps.msys2.outputs.msys2-location }}"
-          rmdir /s /q "%MSYS2DIR%\mingw32"
-          rmdir /s /q "%MSYS2DIR%\mingw64"
-          rmdir /s /q "%MSYS2DIR%\ucrt64"
-          rmdir /s /q "%MSYS2DIR%\clangarm64"
-          rmdir /s /q "%MSYS2DIR%\var\cache\pacman\pkg"
-          rmdir /s /q "%MSYS2DIR%\usr\share\doc"
-          rmdir /s /q "%MSYS2DIR%\usr\share\man"
-          rmdir /s /q "%MSYS2DIR%\usr\share\locale"
-          rmdir /s /q "%MSYS2DIR%\var\log"
-          rmdir /s /q "%MSYS2DIR%\usr\share\examples"
+          $msys2 = "${{ steps.msys2.outputs.msys2-location }}"
+          Write-Host "Cleaning MSYS2 in $msys2"
+          Remove-Item "$msys2\mingw32" -Force -Recurse -ErrorAction Ignore
+          Remove-Item "$msys2\mingw64" -Force -Recurse -ErrorAction Ignore
+          Remove-Item "$msys2\ucrt64" -Force -Recurse -ErrorAction Ignore
+          Remove-Item "$msys2\clangarm64" -Force -Recurse -ErrorAction Ignore
+          Remove-Item "$msys2\var\cache\pacman\pkg" -Force -Recurse -ErrorAction Ignore
+          Remove-Item "$msys2\usr\share\locale" -Force -Recurse -ErrorAction Ignore
+
+      - name: Comment out unneeded repo sections in pacman.conf
+        shell: pwsh
+        run: |
+          $conf = "${{ steps.msys2.outputs.msys2-location }}\etc\pacman.conf"
+          $content = Get-Content $conf
+          $output = $content | ForEach-Object {
+            if ($_ -match '^\[(clangarm64|mingw32|mingw64|ucrt64)\]') {
+              "#$_"
+            } elseif ($_ -match '^Include = /etc/pacman.d/mirrorlist.mingw') {
+              "#$_"
+            } else {
+              $_
+            }
+          }
+          Set-Content -Path $conf -Value $output
 
       - name: Archive minimal MSYS2 portable
         uses: thedoctor0/zip-release@master
         with:
           type: 'zip'
           directory: "${{ steps.msys2.outputs.msys2-location }}"
-          filename: "msys2-portable-clang64-minimal.zip"
+          filename: "msys2-clang64-minimal.zip"
 
       - name: Release portable msys2
         uses: ncipollo/release-action@v1
         with:
           tag: "main"
           name: "MSYS2 Portable CLANG64 Minimal"
-          artifacts: "${{ steps.msys2.outputs.msys2-location }}/msys2-portable-clang64-minimal.zip"
+          artifacts: "${{ steps.msys2.outputs.msys2-location }}/msys2-clang64-minimal.zip"
           allowUpdates: true
           token: ${{ secrets.GITHUB_TOKEN }}
