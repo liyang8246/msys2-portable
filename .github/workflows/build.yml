@@ -57,7 +57,7 @@ jobs:
         shell: pwsh
         run: |
           $msys2 = "${{ steps.msys2.outputs.msys2-location }}"
-          $keep = @("clang64.exe", "clang64.ico", "clang64.ini")
+          $keep = @("clang64.exe", "clang64.ico", "clang64.ini", "msys2_shell.cmd", "autorebase.bat")
           Get-ChildItem -Path $msys2 -File | Where-Object { $keep -notcontains $_.Name } | Remove-Item -Force
 
       - name: Archive minimal MSYS2 portable
