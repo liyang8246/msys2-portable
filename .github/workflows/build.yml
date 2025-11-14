@@ -55,13 +55,8 @@ jobs:
       - name: Remove non-essential packages (safe cleanup)
         shell: msys2 {0}
         run: |
-          # Remove user-friendly tools but keep core pacman functionality
-          pacman -R --noconfirm \
-            nano gawk less info wget curl \
-            bash-completion \
-            heimdal-libs inetutils getent file \
-            time which \
-            gnupg pinentry
+          pacman -R --noconfirm nano bash-completion heimdal-libs pinentry
+          pacman -Scc --noconfirm
 
       - name: Remove safe-to-delete files and documentation
         shell: pwsh
