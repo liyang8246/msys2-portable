@@ -52,12 +52,35 @@ jobs:
           $newContent = @("export MSYS2_PATH_TYPE=strict") + $content
           Set-Content -Path $profilePath -Value $newContent -Encoding UTF8
 
-      - name: Remove unused root files and locale directory
+      - name: Remove non-essential packages (safe cleanup)
+        shell: msys2 {0}
+        run: |
+          # Remove user-friendly tools but keep core pacman functionality
+          pacman -R --noconfirm \
+            nano gawk less info wget curl \
+            bash-completion \
+            heimdal-libs inetutils getent file \
+            time which \
+            gnupg pinentry
+
+      - name: Remove safe-to-delete files and documentation
         shell: pwsh
         run: |
           $msys2 = "${{ steps.msys2.outputs.msys2-location }}"
+
           $keep = @("clang64.exe", "clang64.ico", "clang64.ini", "msys2_shell.cmd", "autorebase.bat")
           Get-ChildItem -Path $msys2 -File | Where-Object { $keep -notcontains $_.Name } | Remove-Item -Force
+
+          Remove-Item "$msys2\usr\share\doc" -Force -Recurse -ErrorAction Ignore
+          Remove-Item "$msys2\usr\share\man" -Force -Recurse -ErrorAction Ignore
+          Remove-Item "$msys2\usr\share\info" -Force -Recurse -ErrorAction Ignore
+          Remove-Item "$msys2\usr\share\licenses" -Force -Recurse -ErrorAction Ignore
+
+          Remove-Item "$msys2\usr\share\locale" -Force -Recurse -ErrorAction Ignore
+          Remove-Item "$msys2\etc\bash_completion.d" -Force -Recurse -ErrorAction Ignore
+          Remove-Item "$msys2\clang64\share" -Force -Recurse -ErrorAction Ignore
+          Remove-Item "$msys2\clang64\include" -Force -Recurse -ErrorAction Ignore
+          Remove-Item "$msys2\var\lib\pacman\sync\*.db" -Force -ErrorAction Ignore
 
       - name: Archive minimal MSYS2 portable
         uses: thedoctor0/zip-release@master
