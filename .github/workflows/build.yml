@@ -52,12 +52,6 @@ jobs:
           $newContent = @("export MSYS2_PATH_TYPE=strict") + $content
           Set-Content -Path $profilePath -Value $newContent -Encoding UTF8
 
-      - name: Remove non-essential packages (safe cleanup)
-        shell: msys2 {0}
-        run: |
-          pacman -R --noconfirm nano bash-completion heimdal-libs pinentry
-          pacman -Scc --noconfirm
-
       - name: Remove safe-to-delete files and documentation
         shell: pwsh
         run: |
