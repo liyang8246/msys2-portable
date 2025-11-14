@@ -44,6 +44,14 @@ jobs:
           $dst = "${{ steps.msys2.outputs.msys2-location }}\etc\pacman.conf"
           Copy-Item -Path $src -Destination $dst -Force
 
+      - name: Add MSYS2_PATH_TYPE=strict to etc/profile
+        shell: pwsh
+        run: |
+          $profilePath = "${{ steps.msys2.outputs.msys2-location }}\etc\profile"
+          $content = Get-Content -Path $profilePath
+          $newContent = @("export MSYS2_PATH_TYPE=strict") + $content
+          Set-Content -Path $profilePath -Value $newContent -Encoding UTF8
+
       - name: Remove unused root files and locale directory
         shell: pwsh
         run: |
