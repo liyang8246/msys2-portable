@@ -1,0 +1,1 @@
+export MSYS2_PATH_TYPE=strict

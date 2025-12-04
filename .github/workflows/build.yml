@@ -37,20 +37,10 @@ jobs:
           Remove-Item "$msys2\var\cache\pacman\pkg" -Force -Recurse -ErrorAction Ignore
           Remove-Item "$msys2\usr\share\locale" -Force -Recurse -ErrorAction Ignore
 
-      - name: Replace pacman.conf with your project config
+      - name: Apply rootfs configuration
         shell: pwsh
         run: |
-          $src = "${{ github.workspace }}\pacman.conf"
-          $dst = "${{ steps.msys2.outputs.msys2-location }}\etc\pacman.conf"
-          Copy-Item -Path $src -Destination $dst -Force
-
-      - name: Add MSYS2_PATH_TYPE=strict to etc/profile
-        shell: pwsh
-        run: |
-          $profilePath = "${{ steps.msys2.outputs.msys2-location }}\etc\profile"
-          $content = Get-Content -Path $profilePath
-          $newContent = @("export MSYS2_PATH_TYPE=strict") + $content
-          Set-Content -Path $profilePath -Value $newContent -Encoding UTF8
+          python3 "${{ github.workspace }}\\apply_rootfs_config.py" "${{ github.workspace }}\\rootfs" "${{ steps.msys2.outputs.msys2-location }}"
 
       - name: Remove safe-to-delete files and documentation
         shell: pwsh
@@ -74,7 +64,7 @@ jobs:
       - name: Archive minimal MSYS2 portable
         uses: thedoctor0/zip-release@master
         with:
-          type: 'zip'
+          type: "zip"
           directory: "${{ steps.msys2.outputs.msys2-location }}"
           filename: "msys2-clang64-minimal.zip"
 
