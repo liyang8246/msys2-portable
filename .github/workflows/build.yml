@@ -22,17 +22,17 @@ jobs:
       - id: msys2
         uses: msys2/setup-msys2@v2
         with:
-          msystem: CLANG64
+          msystem: UCRT64
           update: true
 
-      - name: Clean up MSYS2, keep only clang64
+      - name: Clean up MSYS2, keep only ucrt64
         shell: pwsh
         run: |
           $msys2 = "${{ steps.msys2.outputs.msys2-location }}"
           Write-Host "Cleaning MSYS2 in $msys2"
           Remove-Item "$msys2\mingw32" -Force -Recurse -ErrorAction Ignore
           Remove-Item "$msys2\mingw64" -Force -Recurse -ErrorAction Ignore
-          Remove-Item "$msys2\ucrt64" -Force -Recurse -ErrorAction Ignore
+          Remove-Item "$msys2\clang64" -Force -Recurse -ErrorAction Ignore
           Remove-Item "$msys2\clangarm64" -Force -Recurse -ErrorAction Ignore
           Remove-Item "$msys2\var\cache\pacman\pkg" -Force -Recurse -ErrorAction Ignore
           Remove-Item "$msys2\usr\share\locale" -Force -Recurse -ErrorAction Ignore
@@ -47,7 +47,7 @@ jobs:
         run: |
           $msys2 = "${{ steps.msys2.outputs.msys2-location }}"
 
-          $keep = @("clang64.exe", "clang64.ico", "clang64.ini", "msys2_shell.cmd", "autorebase.bat")
+          $keep = @("ucrt64.exe", "ucrt64.ico", "ucrt64.ini", "msys2_shell.cmd", "autorebase.bat")
           Get-ChildItem -Path $msys2 -File | Where-Object { $keep -notcontains $_.Name } | Remove-Item -Force
 
           Remove-Item "$msys2\usr\share\doc" -Force -Recurse -ErrorAction Ignore
@@ -57,8 +57,8 @@ jobs:
 
           Remove-Item "$msys2\usr\share\locale" -Force -Recurse -ErrorAction Ignore
           Remove-Item "$msys2\etc\bash_completion.d" -Force -Recurse -ErrorAction Ignore
-          Remove-Item "$msys2\clang64\share" -Force -Recurse -ErrorAction Ignore
-          Remove-Item "$msys2\clang64\include" -Force -Recurse -ErrorAction Ignore
+          Remove-Item "$msys2\ucrt64\share" -Force -Recurse -ErrorAction Ignore
+          Remove-Item "$msys2\ucrt64\include" -Force -Recurse -ErrorAction Ignore
           Remove-Item "$msys2\var\lib\pacman\sync\*.db" -Force -ErrorAction Ignore
 
       - name: Archive minimal MSYS2 portable
@@ -66,13 +66,13 @@ jobs:
         with:
           type: "zip"
           directory: "${{ steps.msys2.outputs.msys2-location }}"
-          filename: "msys2-clang64-minimal.zip"
+          filename: "msys2-ucrt64-minimal.zip"
 
       - name: Release portable msys2
         uses: ncipollo/release-action@v1
         with:
           tag: "main"
-          name: "MSYS2 Portable CLANG64 Minimal"
-          artifacts: "${{ steps.msys2.outputs.msys2-location }}/msys2-clang64-minimal.zip"
+          name: "MSYS2 Portable UCRT64 Minimal"
+          artifacts: "${{ steps.msys2.outputs.msys2-location }}/msys2-ucrt64-minimal.zip"
           allowUpdates: true
           token: ${{ secrets.GITHUB_TOKEN }}
